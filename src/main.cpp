@@ -95,7 +95,7 @@ int main() {
 		  double Lf = 2.67;
 		  //Handle latency reference
 	    //https://discussions.udacity.com/t/how-to-incorporate-latency-into-the-model/257391/4?u=anasmatic
-		  double delta = j[1]["steering_angle"];
+		  //double delta = j[1]["steering_angle"];
 		  double acceleration = j[1]["throttle"];
 		  double latency = 0.1;//latency = 100ms
 		  px = px + v*cos(psi)*latency;
@@ -105,10 +105,10 @@ int main() {
           
 		  /*
           * TODO: Calculate steering angle and throttle using MPC.
-          *
           * Both are in between [-1, 1].
-          *
           */
+
+		  //Polynomial Fitting
 		  for (size_t i = 0; i < ptsx.size(); i++)
 		  {
 			  //shift car reference angle to 90 deg
@@ -118,21 +118,24 @@ int main() {
 			  ptsx[i] = (shift_x*cos(0 - psi) - shift_y*sin(0 - psi));
 			  ptsy[i] = (shift_x*sin(0 - psi) + shift_y*cos(0 - psi));
 		  }
-		  
 		  double* ptrx = &ptsx[0];
 		  Eigen::Map<Eigen::VectorXd> ptsx_transform(ptrx, 6);
 		  double* ptry = &ptsy[0];
 		  Eigen::Map<Eigen::VectorXd> ptsy_transform(ptry, 6);
-
 		  auto coeffs = polyfit(ptsx_transform, ptsy_transform, 3);//3rd order polynomial
+
+
+
+		  //get ready to pass x,y,psi,v,cte,epsi to the solver
 		  double cte = polyeval(coeffs, 0);
 		  double epsi = psi - atan(coeffs[1] + 2 * px*coeffs[2] + 3 * coeffs[3] * pow(px,2));
-//		  double epsi = -atan(coeffs[1]);
-
+		  //double epsi = -atan(coeffs[1]);
 		  Eigen::VectorXd state(6);
 		  state << 0, 0, 0, v, cte, epsi;
 		  auto vars = mpc.Solve(state, coeffs);
-		  /**************************/
+		  
+
+
           json msgJson;
           // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
           // Otherwise the values will be in between [-deg2rad(25), deg2rad(25] instead of [-1, 1].
@@ -140,8 +143,10 @@ int main() {
 		  double throttle_value = vars[1];					//a_start
           msgJson["steering_angle"] = steer_value;
           msgJson["throttle"] = throttle_value;
-          //Display the MPC predicted trajectory 
-          vector<double> mpc_x_vals;
+          
+		  
+		  //Display the MPC predicted trajectory 
+		  vector<double> mpc_x_vals;
           vector<double> mpc_y_vals;
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
           // the points in the simulator are connected by a Green line
@@ -155,6 +160,8 @@ int main() {
           msgJson["mpc_x"] = mpc_x_vals;
           msgJson["mpc_y"] = mpc_y_vals;
 		  
+
+
           //Display the waypoints/reference line
           vector<double> next_x_vals;
           vector<double> next_y_vals;
@@ -169,6 +176,8 @@ int main() {
 		  }
           msgJson["next_x"] = next_x_vals;
           msgJson["next_y"] = next_y_vals;
+
+
 
 
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";

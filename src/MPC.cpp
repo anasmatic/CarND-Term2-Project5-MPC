@@ -23,7 +23,7 @@ const double Lf = 2.67;
 
 double ref_cte = 0;
 double ref_epsi = 0;
-double ref_v = 60;// 65;// 100;
+double ref_v = 60;// 55;// 100;
 
 size_t x_start = 0;
 size_t y_start = x_start + N;
@@ -48,27 +48,25 @@ class FG_eval {
     // the Solver function below.
 	fg[0] = 0;
 	for (size_t t = 0; t < N; t++) {
-	  /*fg[0] += 2000 * CppAD::pow(vars[cte_start + t] - ref_cte, 2);
-	  fg[0] += 2000 * CppAD::pow(vars[epsi_start + t] - ref_epsi, 2);
-	  fg[0] += CppAD::pow(vars[v_start + t] - ref_v, 2);*/
+	  //referance : https://discussions.udacity.com/t/mpc-cost-paramter-tuning-question/354670/2?u=anasmatic
+	  //more we need less weight for cte , to take sharp curves with high accuracy
 	  fg[0] += 4000 * CppAD::pow(vars[cte_start + t] - ref_cte, 2);
 	  fg[0] += 2000 * CppAD::pow(vars[epsi_start + t] - ref_epsi, 2);
 	  fg[0] += CppAD::pow(vars[v_start + t] - ref_v, 2);
 	}
 	// Minimize the use of actuators.
 	for (size_t t = 0; t < N - 1; t++) {
-	  /*fg[0] += 5*CppAD::pow(vars[delta_start + t], 2);
-	  fg[0] += 5*CppAD::pow(vars[a_start + t], 2);*/
+	  //this multiplyer helps overcome swing after final curve
 	  fg[0] += 3*CppAD::pow(vars[delta_start + t], 2);
-	  fg[0] += 3*CppAD::pow(vars[a_start + t], 2);
+	  //this multiplyer helps overcome swing at start
+	  fg[0] += 30*CppAD::pow(vars[a_start + t], 2);
 	}
 
 	  // Minimize the value gap between sequential actuations.
 	for (size_t t = 0; t < N - 2; t++) {
-	  /*fg[0] += 200*CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
-	  fg[0] += 10*CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);*/
+	  //handle steering reflection and swings back to center
 	  fg[0] += 200*CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
-	  fg[0] += 25*CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
+	  fg[0] += 30*CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
 	}// Minimize the value gap between sequential actuations.
 	//initialize the model to the initial state
 	fg[1 + x_start] = vars[x_start];
@@ -117,16 +115,6 @@ class FG_eval {
 		  cte1 - ((f0 - y0) + (v0 * CppAD::sin(epsi0) * dt));
 	  fg[2 + epsi_start + t] =
 		  epsi1 - ((psi0 - psides0) - v0 * delta0 / Lf * dt);
-	  /*
-	  fg[2 + x_start + t] = x1 - (x0 + v0 * CppAD::cos(psi0) * dt);
-	  fg[2 + y_start + t] = y1 - (y0 + v0 * CppAD::sin(psi0) * dt);
-	  fg[2 + psi_start + t] = psi1 - (psi0 + v0 * delta0 / Lf * dt);
-	  fg[2 + v_start + t] = v1 - (v0 + a0 * dt);
-	  fg[2 + cte_start + t] =
-		  cte1 - ((f0 - y0) + (v0 * CppAD::sin(epsi0) * dt));
-	  fg[2 + epsi_start + t] =
-		  epsi1 - ((psi0 - psides0) + v0 * delta0 / Lf * dt);
-	  */
     }
   }
 };
@@ -174,7 +162,6 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   Dvector vars_lowerbound(n_vars);
   Dvector vars_upperbound(n_vars);
   // TODO: Set lower and upper limits for variables.
-
   for (i = 0; i < delta_start; i++) {
 	  vars_lowerbound[i] = -1.0e19;
 	  vars_upperbound[i] = 1.0e19;
@@ -182,14 +169,12 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
 
   // The upper and lower limits of delta are set to -25 and 25
   // degrees (values in radians).
-  // NOTE: Feel free to change this to something else.
   for (i = delta_start; i < a_start; i++) {
 	  vars_lowerbound[i] = -0.436332*Lf;
 	  vars_upperbound[i] = 0.436332*Lf;
   }
 
   // Acceleration/decceleration upper and lower limits.
-  // NOTE: Feel free to change this to something else.
   for (i = a_start; i < n_vars; i++) {
 	  vars_lowerbound[i] = -1.0;
 	  vars_upperbound[i] = 1.0;
