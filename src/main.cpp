@@ -77,7 +77,7 @@ int main() {
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
     string sdata = string(data).substr(0, length);
-    cout << sdata << endl;
+    //cout << sdata << endl;
     if (sdata.size() > 2 && sdata[0] == '4' && sdata[1] == '2') {
       string s = hasData(sdata);
       if (s != "") {
@@ -91,8 +91,19 @@ int main() {
           double py = j[1]["y"];
           double psi = j[1]["psi"];
           double v = j[1]["speed"];
-
-          /*
+			
+		  double Lf = 2.67;
+		  //Handle latency reference
+	    //https://discussions.udacity.com/t/how-to-incorporate-latency-into-the-model/257391/4?u=anasmatic
+		  double delta = j[1]["steering_angle"];
+		  double acceleration = j[1]["throttle"];
+		  double latency = 0.1;//latency = 100ms
+		  px = px + v*cos(psi)*latency;
+		  py = py + v*sin(psi)*latency;
+		  //psi = psi + v*delta / Lf*latency;//Drives the car crazy !
+		  v = v + acceleration*latency;
+          
+		  /*
           * TODO: Calculate steering angle and throttle using MPC.
           *
           * Both are in between [-1, 1].
@@ -115,11 +126,8 @@ int main() {
 
 		  auto coeffs = polyfit(ptsx_transform, ptsy_transform, 3);//3rd order polynomial
 		  double cte = polyeval(coeffs, 0);
-//		  double epsi = psi - atan(coeffs[1] + 2 * px*coeffs[2] + 3 * coeffs[3] * pow(px,2));
-		  double epsi = -atan(coeffs[1]);
-
-          double steer_value = j[1]["steering_angle"];
-          double throttle_value = j[1]["throttle"];
+		  double epsi = psi - atan(coeffs[1] + 2 * px*coeffs[2] + 3 * coeffs[3] * pow(px,2));
+//		  double epsi = -atan(coeffs[1]);
 
 		  Eigen::VectorXd state(6);
 		  state << 0, 0, 0, v, cte, epsi;
@@ -128,9 +136,8 @@ int main() {
           json msgJson;
           // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
           // Otherwise the values will be in between [-deg2rad(25), deg2rad(25] instead of [-1, 1].
-		  double Lf = 2.67;
-		  steer_value = vars[0]/ (deg2rad(25) * Lf);
-		  throttle_value = vars[1];
+		  double steer_value = vars[0] / (deg2rad(25) *Lf); //delta_start * deg2rad(25)
+		  double throttle_value = vars[1];					//a_start
           msgJson["steering_angle"] = steer_value;
           msgJson["throttle"] = throttle_value;
           //Display the MPC predicted trajectory 

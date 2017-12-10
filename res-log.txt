@@ -1,3 +1,106 @@
 build cmds
 1: cmake .. -G "Unix Makefiles" && make
 2: ./mpc
+
+speed 40
+multiply delta_start -smooth steering-:
+200 crazy
+100 still swings bad, crazy at straight roads
+0.001 crazy more than 200
+0.1 swings bad on straight, crash on curves 
+50 bad curves, but stop swinging gradualy
+25 too bad curves, but stop swinging gradualy
+10 crazy !
+Note : I have to tune a_start as well
+delta 10 , a 10 : take curves good, swings less after curves
+delta 100, a 100: both are bad
+delta 10 , a 100: take curves slowly make it crash
+delta 100, a 10 : still take curves slow, but survive curves
+delta 500, a 10 : no swings, still take curves slow and crash
+delta 150, a 15 : no swings, still take curves slow
+keep delta 100, a10
+
+increase speed to 100
+delta 100, a 10 : is not working anymore
+change speed to 50
+delta 100, a 10 : is not working anymore
+  but changing N from 10 to 20 can make diffrance, 
+  not good but remarks that changes to speed requires change in N
+
+==========================
+
+managed to work Speed = 55
+while with x,y,psi,v,cte,epsi,delta,a=1
+N = 7 & dt = 0.1
+==========================
+increasing speed to 65
+tuening N & dt is not working
+have to tune other params
+
+tune cte_start :
+* 50 = car starts to brake cuves, sometimes crashs
+* 100 = better curves but mor wiggle after curves
+* 200	= even brakes better, but serius wiggle problem cause carsh
+tune delta_start :
+* 100 = still wiggle after first curve
+tune a_start :
+* 10 = pass 1st curve good, wiggle after 2nd curve
+tune delta_start :
+*200 = better stearing at curves, more wiggle after
+tune a_start :
+* 50 = less wiggly, but not satisfying
+* 100 = no improvment
+* 50  back to 50
+__________ 
+speed=65 , N=7 , dt=0.1 , cte_start=200 , 
+delta_start=300 , a_start=50
+good but wiggles after some curves
+_________
+trying to tune cte again
+tune cte_start :
+* 400 = better brake at curves, but wiggle
+tune delta_start :
+*500 = more steady after curves
+tune a_start :
+* 100=less wiggles , but maybe we need more cte effect
+tune cte_start :
+* 800 = no no ,backup
+___________
+last trial for 75
+cte_*400, epsi_*200, delta3_*500, a3_*60 = crash in 3rd turn
+cte_ * 4000 = good breaks , swing too hard on high speed
+epsi_*2000 = longer brakes, swings more on low speeds
+epsi*200 -> just reset
+delta3*200 = steer gently, cause crash on sharp curves
+_________________
+back to speed=55
+N=8, dt=0.1, cte_*2000, epsi_*1000, delta_*200, a_*50
+crash after 3rd turn
+________________
+speed=60
+N=8, dt=0.1,
+delta*200
+a*10 bad
+a*15 bad
+a*20 better
+a*25 better
+epsi = 4000 , better at curves but wiggle after first round
+epsi = 2000 same
+cte = 6000 , stopped wiggling
+cte = 4000 , still fine
+Notice break hard at curves, wiggle hard at initial state
+can't fix that tuning only 1st & 3rd loops
+tuninig 2nd loop :
+2nd delta*5 bad
+2nd a*5 mmm 
+2nd delta*5 a*1 bad
+2nd delta*5 a*2 bad
+2nd delta*5 a*3 mmm
+2nd delta*3 a*3 Yes !
+=================================
+push mile stone
+speed=60, N=8, dt=0.1,
+1st cte*4000, epsi*2000
+2nd delta*3 a*3
+3rd delta*200 a*25
+==================================
