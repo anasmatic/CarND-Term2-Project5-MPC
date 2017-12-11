@@ -6,7 +6,7 @@
 using CppAD::AD;
 
 // TODO: Set the timestep length and duration
-size_t N = 8;
+size_t N = 10;//8; //change from 8 to 10 helps fix the tail of green line point to the wrond direction
 double dt = 0.1;
 
 // This value assumes the model presented in the classroom is used.
@@ -23,7 +23,7 @@ const double Lf = 2.67;
 
 double ref_cte = 0;
 double ref_epsi = 0;
-double ref_v = 60;// 55;// 100;
+double ref_v = 90;// 55;// 100;
 
 size_t x_start = 0;
 size_t y_start = x_start + N;
@@ -56,10 +56,10 @@ class FG_eval {
 	}
 	// Minimize the use of actuators.
 	for (size_t t = 0; t < N - 1; t++) {
-	  //this multiplyer helps overcome swing after final curve
+	  //this multiplyer helps overcome swing at beginning
 	  fg[0] += 3*CppAD::pow(vars[delta_start + t], 2);
-	  //this multiplyer helps overcome swing at start
-	  fg[0] += 30*CppAD::pow(vars[a_start + t], 2);
+	  //this multiplyer helps control acceleration
+	  fg[0] += 3*CppAD::pow(vars[a_start + t], 2);
 	}
 
 	  // Minimize the value gap between sequential actuations.

@@ -95,12 +95,12 @@ int main() {
 		  double Lf = 2.67;
 		  //Handle latency reference
 	    //https://discussions.udacity.com/t/how-to-incorporate-latency-into-the-model/257391/4?u=anasmatic
-		  //double delta = j[1]["steering_angle"];
+		  double delta = j[1]["steering_angle"];
 		  double acceleration = j[1]["throttle"];
 		  double latency = 0.1;//latency = 100ms
 		  px = px + v*cos(psi)*latency;
 		  py = py + v*sin(psi)*latency;
-		  //psi = psi + v*delta / Lf*latency;//Drives the car crazy !
+		  psi = psi + v*-delta / Lf*latency;//Drives the car crazy !
 		  v = v + acceleration*latency;
           
 		  /*
@@ -128,8 +128,8 @@ int main() {
 
 		  //get ready to pass x,y,psi,v,cte,epsi to the solver
 		  double cte = polyeval(coeffs, 0);
-		  double epsi = psi - atan(coeffs[1] + 2 * px*coeffs[2] + 3 * coeffs[3] * pow(px,2));
-		  //double epsi = -atan(coeffs[1]);
+		  //double epsi = psi - atan(coeffs[1] + 2 * px*coeffs[2] + 3 * coeffs[3] * pow(px,2));
+		  double epsi = -atan(coeffs[1]);
 		  Eigen::VectorXd state(6);
 		  state << 0, 0, 0, v, cte, epsi;
 		  auto vars = mpc.Solve(state, coeffs);
