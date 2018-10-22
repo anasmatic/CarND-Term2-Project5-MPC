@@ -82,6 +82,7 @@ to handel this I multiply initial x , y , psi, and v by the latency value
 I hade troubles making psi works, so I ommitted it.
 
 #### results :
+	[youtube video](https://www.youtube.com/watch?v=MgXbPQHJcXE)
 
 car can take many loops around the track,
 
